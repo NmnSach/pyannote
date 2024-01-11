@@ -50,7 +50,7 @@ def query(filename):
     return response.json()
 
 output = query("1.mp3")
-text = str(output["text"])
+text = str(output['text'])
 print(text)
 
 senti = query_sentiment({
@@ -69,3 +69,23 @@ print(senti[0][0])
 
 
 #transcript ka print basically pyannote jaisa ho --- dialogue by dialogue  -- taaki user output zyada readable ho
+
+from pyannote.audio import Pipeline
+pipeline = Pipeline.from_pretrained(
+    "pyannote/speaker-diarization-3.1",
+    use_auth_token={API})
+
+# send pipeline to GPU (when available)
+import torch
+pipeline.to(torch.device("cuda"))
+
+# apply pretrained pipeline
+diarization = pipeline("1.mp3")
+
+# print the result
+for turn, _, speaker in diarization.itertracks(yield_label=True):
+    print(f"start={turn.start:.1f}s stop={turn.end:.1f}s speaker_{speaker}")
+# start=0.2s stop=1.5s speaker_0
+# start=1.8s stop=3.9s speaker_1
+# start=4.2s stop=5.7s speaker_0
+# ...
